@@ -1,27 +1,11 @@
 [
   {
-    "title": "Product 1",
-    "description": "Description 1",
-    "price": 100,
-    "stock": 10,
-    "thumbnail": "thumbnail1",
-    "code": 1
-  },
-  {
     "title": "Product 2",
     "description": "Description 2",
     "price": 200,
     "stock": 20,
     "thumbnail": "thumbnail2",
     "code": 2
-  },
-  {
-    "title": "Product 3",
-    "description": "Description 3",
-    "price": 300,
-    "stock": 30,
-    "thumbnail": "thumbnail3",
-    "code": 3
   },
   {
     "title": "Product 4",
@@ -32,14 +16,6 @@
     "code": 4
   },
   {
-    "title": "Product 5",
-    "description": "Description 5",
-    "price": 500,
-    "stock": 50,
-    "thumbnail": "thumbnail5",
-    "code": 5
-  },
-  {
     "title": "Product 0",
     "description": "Description 0",
     "price": 0,
@@ -48,28 +24,12 @@
     "code": 6
   },
   {
-    "title": "Product 1",
-    "description": "Description 1",
-    "price": 100,
-    "stock": 10,
-    "thumbnail": "thumbnail1",
-    "code": 7
-  },
-  {
     "title": "Product 2",
     "description": "Description 2",
     "price": 200,
     "stock": 20,
     "thumbnail": "thumbnail2",
     "code": 8
-  },
-  {
-    "title": "Product 3",
-    "description": "Description 3",
-    "price": 300,
-    "stock": 30,
-    "thumbnail": "thumbnail3",
-    "code": 9
   },
   {
     "title": "Product 4",
@@ -142,101 +102,5 @@
     "stock": 0,
     "thumbnail": "thumbnail0",
     "code": 18
-  },
-  {
-    "title": "Product 1",
-    "description": "Description 1",
-    "price": 100,
-    "stock": 10,
-    "thumbnail": "thumbnail1",
-    "code": 19
-  },
-  {
-    "title": "Product 2",
-    "description": "Description 2",
-    "price": 200,
-    "stock": 20,
-    "thumbnail": "thumbnail2",
-    "code": 20
-  },
-  {
-    "title": "Product 3",
-    "description": "Description 3",
-    "price": 300,
-    "stock": 30,
-    "thumbnail": "thumbnail3",
-    "code": 21
-  },
-  {
-    "title": "Product 4",
-    "description": "Description 4",
-    "price": 400,
-    "stock": 40,
-    "thumbnail": "thumbnail4",
-    "code": 22
-  },
-  {
-    "title": "Product 5",
-    "description": "Description 5",
-    "price": 500,
-    "stock": 50,
-    "thumbnail": "thumbnail5",
-    "code": 23
-  },
-  {
-    "title": "Product 0",
-    "description": "Description 0",
-    "price": 0,
-    "stock": 0,
-    "thumbnail": "thumbnail0",
-    "code": 24
-  },
-  {
-    "title": "Product 1",
-    "description": "Description 1",
-    "price": 100,
-    "stock": 10,
-    "thumbnail": "thumbnail1",
-    "code": 25
-  },
-  {
-    "title": "Product 2",
-    "description": "Description 2",
-    "price": 200,
-    "stock": 20,
-    "thumbnail": "thumbnail2",
-    "code": 26
-  },
-  {
-    "title": "Product 3",
-    "description": "Description 3",
-    "price": 300,
-    "stock": 30,
-    "thumbnail": "thumbnail3",
-    "code": 27
-  },
-  {
-    "title": "Product 4",
-    "description": "Description 4",
-    "price": 400,
-    "stock": 40,
-    "thumbnail": "thumbnail4",
-    "code": 28
-  },
-  {
-    "title": "Product 5",
-    "description": "Description 5",
-    "price": 500,
-    "stock": 50,
-    "thumbnail": "thumbnail5",
-    "code": 29
-  },
-  {
-    "title": "Product 0",
-    "description": "Description 0",
-    "price": 0,
-    "stock": 0,
-    "thumbnail": "thumbnail0",
-    "code": 30
   }
 ]

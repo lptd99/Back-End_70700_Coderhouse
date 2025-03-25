@@ -36,6 +36,13 @@ async function main() {
   await productManager.getProductById(8);
   await productManager.getProductById(99);
   await productManager.getProductById(15);
+  await productManager.deleteProductById(1);
+  await productManager.deleteProductById(3);
+  await productManager.deleteProductById(5);
+  await productManager.deleteProductById(7);
+  await productManager.deleteProductById(9);
+
+  console.log(await productManager.getProducts());
 }
 
 main();

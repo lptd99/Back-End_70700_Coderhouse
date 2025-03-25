@@ -32,6 +32,7 @@ class ProductManager {
       let resultado = await fs.readFile(this.path, "utf-8");
 
       this.products = resultado.trim() ? JSON.parse(resultado) : [];
+      return this.products;
     } catch (err) {
       console.error("Erro ao ler o arquivo:", err.message);
       return [];
@@ -85,6 +86,11 @@ class ProductManager {
     return null;
   }
 
+  async getProducts() {
+    await this.#loadProducts();
+    return this.products;
+  }
+
   updateProduct(id, product) {
     if (this.getProductById(id)) {
       if (this.validateProduct(product)) {
@@ -98,11 +104,11 @@ class ProductManager {
     }
   }
 
-  deleteProduct(id) {
-    if (this.getProductById(id)) {
+  async deleteProductById(id) {
+    if (await this.getProductById(id)) {
       this.products = this.products.filter((p) => p.code !== id);
       console.log("Produto de código " + id + " removido.");
-      this.#saveProducts();
+      await this.#saveProducts();
     }
   }
 }
