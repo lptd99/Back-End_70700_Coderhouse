@@ -26,8 +26,14 @@ const createCart = async (req, res) => {
   }
 };
 
-const getProductsFromCart = async (req, res) => {
+const getProductsFromCart = async (req, res, next) => {
   let userId = parseInt(req.params.id);
+  console.log(`userId: ${userId}`);
+  if (isNaN(userId)) {
+    res.status(400);
+    return next({ message: `ID do usuário inválido.` });
+  }
+
   let cart = await cartManager.getCartById(userId);
 
   if (!cart) {
