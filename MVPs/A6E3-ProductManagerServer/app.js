@@ -11,10 +11,10 @@ app.get("/products", async (req, res) => {
   let { limit } = req.query;
   if (limit && limit > 0) {
     let limitedProducts = await productManager.getProducts(limit);
-    return res.status(200).json({ message: limitedProducts });
+    return res.status(200).json({ limitedProducts: limitedProducts });
   } else {
     let products = await productManager.getProducts();
-    return res.status(200).json({ message: products });
+    return res.status(200).json({ products: products });
   }
 });
 
