@@ -33,7 +33,7 @@ const getProductsFromCart = async (req, res) => {
   if (!cart) {
     createCart(req, res);
   } else {
-    return res.status(200).json({ message: cart.getProducts() });
+    return res.status(200).json({ cartProducts: cart.getProducts() });
   }
 };
 
@@ -79,7 +79,7 @@ const getCarts = async (req, res) => {
   }
 
   if (carts.length > 0) {
-    return res.status(200).json({ message: carts });
+    return res.status(200).json({ carts: carts });
   } else {
     return res.status(404).json({ message: "Nenhum carrinho encontrado." });
   }
