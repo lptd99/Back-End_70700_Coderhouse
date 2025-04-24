@@ -1,12 +1,14 @@
-const Product = require("./product.js");
-const path = require("path");
-const fs = require("fs").promises;
+import { promises as fs } from "fs";
+import path from "path";
+import Product from "./product.model.js";
 
 class ProductManager {
   products = [];
-  path = "";
-  constructor(filePath) {
-    this.path = filePath;
+  path = "./data/products.json";
+  constructor(customFilePath) {
+    if (customFilePath) {
+      this.path = customFilePath;
+    }
     this.#createFile();
   }
 
@@ -16,7 +18,9 @@ class ProductManager {
       await fs.mkdir(dir, { recursive: true });
       await fs.access(this.path);
     } catch (err) {
-      console.log("Arquivo não encontrado. Criando novo...");
+      console.log(
+        `Arquivo não encontrado no caminho ${this.path}. Criando novo...`
+      );
       await fs.writeFile(this.path, "[]"); // Criar arquivo JSON vazio
     }
   }
@@ -32,6 +36,22 @@ class ProductManager {
       let resultado = await fs.readFile(this.path, "utf-8");
 
       this.products = resultado.trim() ? JSON.parse(resultado) : [];
+      this.products = this.products.map((product) => {
+        const newProduct = new Product(
+          product.title,
+          product.description,
+          product.price,
+          product.stock,
+          product.thumbnail,
+          product.category,
+          product.status
+        );
+        newProduct.code = product.code;
+        return newProduct;
+      });
+      console.log("Produtos instanciados com sucesso.");
+      console.log("Quantidade de produtos: " + this.products.length);
+
       return this.products;
     } catch (err) {
       console.error("Erro ao ler o arquivo:", err.message);
@@ -45,16 +65,39 @@ class ProductManager {
 
   async addProduct(product) {
     await this.#loadProducts();
-    if (this.validateProduct(product)) {
+    let newProduct = null;
+    try {
+      newProduct = new Product(
+        product.title,
+        product.description,
+        product.price,
+        product.stock,
+        product.thumbnail,
+        product.category,
+        product.status
+      );
+    } catch {
+      console.log(
+        "Erro ao criar produto. Verifique os dados do produto: " + product
+      );
+      return null;
+    }
+    if (this.validateProduct(newProduct)) {
       let size = this.products.length;
       if (size === 0) {
-        product.code = 1;
+        newProduct.code = 1;
       } else {
-        product.code = this.products[size - 1].code + 1;
+        newProduct.code = this.products[size - 1].code + 1;
       }
-      this.products.push(product);
+      this.products.push(newProduct);
+      await this.#saveProducts();
+      return newProduct;
+    } else {
+      console.log(
+        "Produto inválido. Não foi possível adicionar o produto ao arquivo."
+      );
+      return null;
     }
-    await this.#saveProducts();
   }
 
   async addProducts(productsList) {
@@ -78,8 +121,6 @@ class ProductManager {
     await this.#loadProducts();
     let product = this.products.find((p) => p.code === code);
     if (product) {
-      // TODO REMOVER
-      console.log(product);
       return product;
     }
     console.log("Produto de código " + code + " não encontrado.");
@@ -94,26 +135,32 @@ class ProductManager {
     return this.products;
   }
 
-  updateProduct(id, product) {
+  async updateProduct(id, product) {
+    let result = false;
     if (this.getProductById(id)) {
       if (this.validateProduct(product)) {
         let index = this.products.findIndex((p) => p.code === id);
         if (index !== -1) {
           this.products[index] = product;
+          this.products[index].code = id;
           console.log("Produto de código " + id + " atualizado.");
           this.#saveProducts();
+          result = true;
         }
       }
     }
+    return result;
   }
 
-  async deleteProductById(id) {
+  async deleteProduct(id) {
+    let result = false;
     if (await this.getProductById(id)) {
       this.products = this.products.filter((p) => p.code !== id);
       console.log("Produto de código " + id + " removido.");
       await this.#saveProducts();
+      result = true;
     }
+    return result;
   }
 }
-
-module.exports = ProductManager;
+export default ProductManager;
