@@ -12,12 +12,6 @@ router.use((req, res, next) => {
   console.log("QUERY:", req.query);
   console.log("BODY:", req.body);
   console.log("DATE AND TIME:", new Date().toString());
-  console.log("======= =======");
-  // DÚVIDA TO-DO TODO TO DO DUVIDA PERGUNTA
-  // Não funciona, como fazer para que o console.log do statusCode e statusMessage apareça depois do res.send?
-  console.log("REQUEST COMPLETED");
-  console.log("response status:", res.statusCode);
-  console.log("response message:", res.statusMessage);
   console.log("//=======// //=======//");
   next();
 });
