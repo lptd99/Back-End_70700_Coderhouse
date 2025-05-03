@@ -38,10 +38,12 @@ const getProductById = async (req, res) => {
 };
 
 const addProduct = async (req, res) => {
+  const io = req.app.get("io"); // recupera o io
   let product = req.body;
 
   const result = await productManager.addProduct(product);
   if (result) {
+    io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto adicionado com sucesso." });
   } else {
     return res.status(400).json({ message: "Produto inválido." });
@@ -53,6 +55,7 @@ const updateProduct = async (req, res) => {
   let product = req.body;
   const result = await productManager.updateProduct(id, product);
   if (result) {
+    io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto atualizado com sucesso." });
   } else {
     return res
@@ -65,6 +68,7 @@ const deleteProduct = async (req, res) => {
   let id = parseInt(req.params.id);
   const result = await productManager.deleteProduct(id);
   if (result) {
+    io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto deletado com sucesso." });
   } else {
     return res
