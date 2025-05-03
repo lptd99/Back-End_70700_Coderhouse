@@ -1,0 +1,27 @@
+<!-- Div que envolve todo o conteúdo do chat -->
+<div class="container">
+  <!-- Título do chat -->
+  <h2></h2>
+
+  <!-- Campo de entrada de texto e botão de envio -->
+  <div class="input-group mt-3">
+    <div class="input-group-append">
+      <button id="loadProductsButton" class="btn btn-primary">Carregar Produtos</button>
+    </div>
+  </div>
+
+  <!-- Card para exibir as mensagens -->
+  <div class="card">
+    <div class="card-header">
+      Produtos
+    </div>
+    <div class="products-body" id="productsCard">
+      <!-- Lista de mensagens -->
+      <ul id="productsList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Inclusão do script do Socket.IO -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/realTimeProductsScript.js"></script>
