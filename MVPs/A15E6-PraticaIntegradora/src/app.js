@@ -6,22 +6,30 @@ import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import apiRouter from "./routes/api.router.js";
 import viewRouter from "./routes/view.router.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const app = express();
 const server = http.createServer(app);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+
 app.engine("handlebars", handlebars.engine());
+
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 const io = new Server(server);
 app.set("io", io); // isso aqui compartilha o io com os controllers
+
 app.use("/", viewRouter);
+
 const socketServer = new Server(server);
 console.log("Socket server created");
+
 let messages = [];
+
 socketServer.on("connection", (socket) => {
   console.log("Connection established");
   socket.on("message", (message) => {
@@ -42,6 +50,7 @@ socketServer.on("connection", (socket) => {
     console.log("Usuário desconectado");
   });
 });
+
 app.use("/api", apiRouter);
 server.listen(8080, () => {
   console.log("Servidor rodando na porta 8080");
