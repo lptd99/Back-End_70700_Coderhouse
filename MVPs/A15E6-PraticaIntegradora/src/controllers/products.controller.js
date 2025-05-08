@@ -1,6 +1,7 @@
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import ProductManager from "../models/productManager.model.js";
+import { productModel } from "../dao/models/product.model.js";
+import ProductManager from "../dao/productManager.model.fs.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,10 +14,12 @@ const getProducts = async (req, res) => {
   let { limit } = req.query;
   let products = [];
   if (limit && limit > 0) {
-    let limitedProducts = await productManager.getProducts(limit);
+    // let limitedProducts = await productManager.getProducts(limit); ============== // Old, FileSystem usage
+    let limitedProducts = await productModel.find().limit(limit);
     products = limitedProducts;
   } else {
-    products = await productManager.getProducts();
+    // products = await productManager.getProducts(); ============== // Old, FileSystem usage
+    products = await productModel.find();
   }
   if (products.length > 0) {
     return res.status(200).json({ products: products });
@@ -41,7 +44,29 @@ const addProduct = async (req, res) => {
   const io = req.app.get("io"); // recupera o io
   let product = req.body;
 
-  const result = await productManager.addProduct(product);
+  if (
+    !product.title ||
+    !product.description ||
+    !product.price ||
+    !product.thumbnail ||
+    !product.stock
+  ) {
+    return res.status(400).json({ message: "Produto inválido." });
+  }
+  if (product.price < 0 || product.stock < 0) {
+    return res.status(400).json({ message: "Produto inválido." });
+  }
+  if (product.code) {
+    const existingProduct = await productModel.findOne({ code: product.code });
+    if (existingProduct) {
+      return res
+        .status(400)
+        .json({ message: `Produto de código ${product.code} já existe.` });
+    }
+  }
+
+  // const result = productManager.addProduct(product); ============== // Old, FileSystem usage
+  const result = await productModel.create(product);
   if (result) {
     io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto adicionado com sucesso." });
