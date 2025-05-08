@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import express from "express";
 import handlebars from "express-handlebars";
 import http from "http";
@@ -6,6 +7,7 @@ import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import apiRouter from "./routes/api.router.js";
 import viewRouter from "./routes/view.router.js";
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
