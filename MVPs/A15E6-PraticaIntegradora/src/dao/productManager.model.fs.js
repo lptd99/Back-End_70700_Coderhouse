@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import Product from "./product.model.js";
+import Product from "./product.model.fs.js";
 
 class ProductManager {
   products = [];
