@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import handlebars from "express-handlebars";
 import http from "http";
+import mongoose from "mongoose";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
@@ -57,5 +58,15 @@ app.use("/api", apiRouter);
 server.listen(8080, () => {
   console.log("Servidor rodando na porta 8080");
 });
+
+mongoose
+  .connect(process.env.MONGOOSE_DB_CONNECTION_STRING)
+  .then(() => {
+    console.log("Mongo conectado");
+  })
+  .catch((error) => {
+    console.log(error);
+    process.exit(1);
+  });
 
 export default app;
