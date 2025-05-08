@@ -1,7 +1,7 @@
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import CartManager from "../models/cartManager.model.js";
-import ProductManager from "../models/productManager.model.js";
+import CartManager from "../dao/cartManager.model.fs.js";
+import ProductManager from "../dao/productManager.model.fs.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
