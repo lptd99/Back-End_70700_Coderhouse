@@ -78,7 +78,10 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   let id = parseInt(req.params.id);
   let product = req.body;
-  const result = await productManager.updateProduct(id, product);
+  // const result = await productManager.updateProduct(id, product);
+  const result = await productModel.findByIdAndUpdate(id, product, {
+    new: true,
+  });
   if (result) {
     io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto atualizado com sucesso." });
@@ -91,7 +94,8 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   let id = parseInt(req.params.id);
-  const result = await productManager.deleteProduct(id);
+  // const result = await productManager.deleteProduct(id); // ============== // Old, FileSystem usage
+  const result = await productModel.findByIdAndDelete(id);
   if (result) {
     io.emit("productsUpdated"); // emite para todos os clientes
     return res.status(200).json({ message: "Produto deletado com sucesso." });
