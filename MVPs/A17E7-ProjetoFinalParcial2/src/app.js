@@ -59,14 +59,18 @@ server.listen(8080, () => {
   console.log("Servidor rodando na porta 8080");
 });
 
-mongoose
-  .connect(process.env.MONGOOSE_DB_CONNECTION_STRING)
-  .then(() => {
-    console.log("Mongo conectado");
-  })
-  .catch((error) => {
-    console.log(error);
-    process.exit(1);
-  });
+const dbEnvironmentAsyncConnect = async () => {
+  await mongoose
+    .connect(process.env.MONGOOSE_DB_CONNECTION_STRING)
+    .then(() => {
+      console.log("Mongo conectado");
+    })
+    .catch((error) => {
+      console.log(error);
+      process.exit(1);
+    });
+};
+
+dbEnvironmentAsyncConnect();
 
 export default app;
