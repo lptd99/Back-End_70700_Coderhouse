@@ -105,6 +105,7 @@ const deleteProduct = async (req, res) => {
       .json({ message: `Produto de id ${id} não encontrado.` });
   }
 };
+
 export default {
   getProducts,
   getProductById,
