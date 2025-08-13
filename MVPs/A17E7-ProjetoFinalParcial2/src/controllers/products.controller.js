@@ -11,7 +11,7 @@ const productManager = new ProductManager(
 );
 
 const getProducts = async (req, res) => {
-  let { limit } = req.query;
+  let { limit, page, sort, query } = req.params;
   let products = [];
   if (limit && limit > 0) {
     // let limitedProducts = await productManager.getProducts(limit); ============== // Old, FileSystem usage
