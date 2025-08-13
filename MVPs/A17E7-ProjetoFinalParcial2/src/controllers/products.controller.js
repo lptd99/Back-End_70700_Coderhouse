@@ -13,30 +13,15 @@ const productManager = new ProductManager(
 const getProducts = async (req, res) => {
   let { limit, page, sort, query } = req.params;
   let products = [];
-  if (limit && limit > 0) {
-    // let limitedProducts = await productManager.getProducts(limit); ============== // Old, FileSystem usage
-    let limitedProducts = await productModel.find().limit(limit);
-    products = limitedProducts;
-  } else {
-    // products = await productManager.getProducts(); ============== // Old, FileSystem usage
-    products = await productModel.find().limit(10);
-  }
+  products = await productModel.paginate(
+    { query: query || {} },
+    { limit: limit || 10, page: page || 1, sort }
+  );
+
   if (products.length > 0) {
     return res.status(200).json({ products: products });
   } else {
     return res.status(404).json({ message: "Nenhum produto encontrado." });
-  }
-};
-
-const getProductById = async (req, res) => {
-  let id = parseInt(req.params.id);
-  let product = await productManager.getProductById(id);
-  if (product) {
-    return res.status(200).json({ product: product });
-  } else {
-    return res
-      .status(404)
-      .json({ message: `Produto de id ${id} não encontrado.` });
   }
 };
 
