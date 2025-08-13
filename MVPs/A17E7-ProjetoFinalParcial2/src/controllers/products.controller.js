@@ -19,7 +19,7 @@ const getProducts = async (req, res) => {
     products = limitedProducts;
   } else {
     // products = await productManager.getProducts(); ============== // Old, FileSystem usage
-    products = await productModel.find();
+    products = await productModel.find().limit(10);
   }
   if (products.length > 0) {
     return res.status(200).json({ products: products });
