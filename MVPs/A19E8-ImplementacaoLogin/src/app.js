@@ -1,7 +1,9 @@
+import MongoStore from "connect-mongo";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express from "express";
 import handlebars from "express-handlebars";
+import session from "express-session";
 import http from "http";
 import mongoose from "mongoose";
 import path, { dirname } from "path";
@@ -55,7 +57,23 @@ socketServer.on("connection", (socket) => {
   });
 });
 
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+app.use(
+  session({
+    store: MongoStore.create({
+      mongoUrl: process.env.ATLAS_DB_CONNECTION_STRING,
+      mongoOptions: {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      },
+      collectionName: "sessions",
+    }),
+    secret: process.env.COOKIE_SECRET,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
 
 app.use("/api", apiRouter);
 server.listen(8080, () => {
@@ -64,7 +82,7 @@ server.listen(8080, () => {
 
 const dbEnvironmentAsyncConnect = async () => {
   await mongoose
-    .connect(process.env.MONGOOSE_DB_CONNECTION_STRING)
+    .connect(process.env.ATLAS_DB_CONNECTION_STRING)
     .then(() => {
       console.log("Mongo conectado");
     })

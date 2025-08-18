@@ -3,13 +3,20 @@ import usersController from "../controllers/users.controller.js";
 
 const usersRouter = Router();
 
-usersRouter.get("/", usersController.getUsers);
-usersRouter.get("/:email", usersController.getUserByEmail);
+function auth(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).send("Unauthorized");
+  }
+  next();
+}
 
-usersRouter.post("/", usersController.createUser);
+usersRouter.get("/", auth, usersController.getUsers);
+usersRouter.get("/:email", auth, usersController.getUserByEmail);
 
-usersRouter.put("/:email", usersController.updateUser);
+usersRouter.post("/", auth, usersController.createUser);
 
-usersRouter.delete("/:email", usersController.deleteUser);
+usersRouter.put("/:email", auth, usersController.updateUser);
+
+usersRouter.delete("/:email", auth, usersController.deleteUser);
 
 export default usersRouter;
