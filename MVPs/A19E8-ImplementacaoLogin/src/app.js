@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express from "express";
 import handlebars from "express-handlebars";
@@ -53,6 +54,8 @@ socketServer.on("connection", (socket) => {
     console.log("Usuário desconectado");
   });
 });
+
+app.use(cookieParser());
 
 app.use("/api", apiRouter);
 server.listen(8080, () => {

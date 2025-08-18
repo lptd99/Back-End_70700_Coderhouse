@@ -1,5 +1,6 @@
 import { Router } from "express";
 import cartsRouter from "./carts.router.js";
+import cookiesRouter from "./cookies.router.js";
 import productsRouter from "./products.router.js";
 import usersRouter from "./users.router.js";
 
@@ -21,5 +22,6 @@ router.use((req, res, next) => {
 router.use("/carts", cartsRouter);
 router.use("/products", productsRouter);
 router.use("/users", usersRouter);
+router.use("/cookies", cookiesRouter);
 
 export default router;
