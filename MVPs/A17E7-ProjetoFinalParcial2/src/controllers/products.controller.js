@@ -1,27 +1,36 @@
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
 import { productModel } from "../dao/models/product.model.js";
-import ProductManager from "../dao/productManager.model.fs.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const productManager = new ProductManager(
-  path.join(__dirname, "../data/products.json")
-);
 
 const getProducts = async (req, res) => {
   let { limit, page, sort, query } = req.params;
   let products = [];
+
   products = await productModel.paginate(
-    { query: query || {} },
-    { limit: limit || 10, page: page || 1, sort }
+    { query: query },
+    { limit: limit || 10, page, sort }
   );
 
-  if (products.length > 0) {
-    return res.status(200).json({ products: products });
+  if (products.docs.length > 0) {
+    return res.status(200).json({ products: products.docs });
   } else {
     return res.status(404).json({ message: "Nenhum produto encontrado." });
+  }
+};
+
+const getProductById = async (req, res) => {
+  let code = req.params.code;
+  try {
+    let product = await productModel.findOne({ code: code });
+    console.log(product);
+
+    if (product) {
+      return res.status(200).json({ product: product });
+    } else {
+      return res
+        .status(404)
+        .json({ message: `Produto de id ${id} não encontrado.` });
+    }
+  } catch (error) {
+    return res.status(400).json({ message: "ID inválido." });
   }
 };
 
@@ -34,7 +43,8 @@ const addProduct = async (req, res) => {
     !product.description ||
     !product.price ||
     !product.thumbnail ||
-    !product.stock
+    !product.stock ||
+    !product.code
   ) {
     return res.status(400).json({ message: "Produto inválido." });
   }

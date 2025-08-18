@@ -3,12 +3,16 @@ import cartsController from "../controllers/carts.controller.js";
 
 const cartsRouter = Router();
 
-cartsRouter.post("/", cartsController.createCart);
-
 cartsRouter.get("/", cartsController.getCarts);
 
-cartsRouter.get("/:id", cartsController.getProductsFromCart);
+cartsRouter.get("/:uid", cartsController.getProductsFromCart);
 
-cartsRouter.post("/:cid/product/:pid", cartsController.addProductToCart);
+cartsRouter.put("/:uid/:pid/:pquantity", cartsController.addProductToCart);
+cartsRouter.put(
+  "/:uid/products/:pid/:pquantity",
+  cartsController.setProductQuantity
+);
+
+cartsRouter.delete("/:uid", cartsController.clearCart);
 
 export default cartsRouter;

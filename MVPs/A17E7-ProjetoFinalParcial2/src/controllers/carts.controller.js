@@ -1,21 +1,10 @@
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
-import CartManager from "../dao/cartManager.model.fs.js";
-import ProductManager from "../dao/productManager.model.fs.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const cartManager = new CartManager(path.join(__dirname, "../data/carts.json"));
-
-const productManager = new ProductManager(
-  path.join(__dirname, "../data/products.json")
-);
+import { cartModel } from "../dao/models/cart.model.js";
+import { productModel } from "../dao/models/product.model.js";
 
 const createCart = async (req, res) => {
-  let userId = parseInt(req.params.id);
-  const cart = await cartManager.createIfNoCart(userId);
-  if (cart.products.length > 0) {
+  let userEmail = req.params.email;
+  const cart = await cartModel.findOne({ email: userEmail });
+  if (!cart) {
     return res
       .status(200)
       .json({ message: `Carrinho do user ${userId} já existe.` });
@@ -25,50 +14,78 @@ const createCart = async (req, res) => {
 };
 
 const getProductsFromCart = async (req, res, next) => {
-  let userId = parseInt(req.params.id);
-  console.log(`userId: ${userId}`);
-  if (isNaN(userId)) {
-    res.status(400);
-    return next({ message: `ID do usuário inválido.` });
+  const result = await cartModel.findOne({ user: req.params.uid });
+  if (!result) {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
   }
-
-  let cart = await cartManager.getCartById(userId);
-
-  if (!cart) {
-    createCart(req, res);
-  } else {
-    return res.status(200).json({ cartProducts: cart.getProducts() });
-  }
+  return res.status(200).json({ products: result.products });
 };
 
 const addProductToCart = async (req, res) => {
-  let userId = parseInt(req.params.cid);
-  let productId = parseInt(req.params.pid);
-  let quantity = parseInt(req.body.quantity) || 1;
-
-  let product = await productManager.getProductById(productId);
-
-  if (!product) {
-    return res
-      .status(404)
-      .json({ message: `Produto de id ${productId} não encontrado.` });
-  }
+  let userId = req.params.uid;
+  let productId = req.params.pid;
+  let quantity = parseInt(req.params.pquantity) || 1;
 
   if (isNaN(quantity) || quantity <= 0) {
     return res.status(400).json({ message: "Quantidade inválida." });
   }
 
-  let cart = await cartManager.getCartById(userId);
+  let product = await productModel.findById(productId);
+  console.log(product);
+
+  if (!product) {
+    return res
+      .status(404)
+      .json({ message: `Produto de id ${productCode} não encontrado.` });
+  }
+
+  let cart = await cartModel.findOne({ user: userId });
+  console.log(cart);
+
   if (cart) {
-    cart.addProduct(productId, quantity);
-    await cartManager.saveCarts();
+    let productIndex = cart.products.findIndex(
+      (p) => p.product && p.product.toString() === product._id.toString()
+    );
+    if (productIndex !== -1) {
+      cart.products[productIndex].quantity += quantity;
+    } else {
+      cart.products.push({ product: productId, quantity });
+    }
+    await cart.save();
     return res.status(200).json({ message: "Produto adicionado ao carrinho." });
+  } else {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
   }
 };
 
-const getCartByUserId = async (req, res) => {
-  let userId = parseInt(req.params.id);
-  return await cartManager.getCartById(userId);
+const setProductQuantity = async (req, res) => {
+  let userId = req.params.uid;
+  let productId = req.params.pid;
+  let quantity = parseInt(req.params.pquantity) || 1;
+
+  if (isNaN(quantity) || quantity <= 0) {
+    return res.status(400).json({ message: "Quantidade inválida." });
+  }
+
+  let cart = await cartModel.findOne({ user: userId });
+  if (!cart) {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
+  }
+
+  let productIndex = cart.products.findIndex(
+    (p) => p.product && p.product.toString() === productId.toString()
+  );
+  if (productIndex !== -1) {
+    cart.products[productIndex].quantity = quantity;
+    await cart.save();
+    return res
+      .status(200)
+      .json({ message: "Quantidade do produto atualizada." });
+  } else {
+    return res
+      .status(404)
+      .json({ message: "Produto não encontrado no carrinho." });
+  }
 };
 
 const getCarts = async (req, res) => {
@@ -76,10 +93,10 @@ const getCarts = async (req, res) => {
   let carts = [];
 
   if (limit && limit > 0) {
-    let limitedCarts = await cartManager.getCarts(limit);
+    let limitedCarts = await cartModel.find().limit(limit);
     carts = limitedCarts;
   } else {
-    carts = await cartManager.getCarts();
+    carts = await cartModel.find();
   }
 
   if (carts.length > 0) {
@@ -89,9 +106,21 @@ const getCarts = async (req, res) => {
   }
 };
 
+const clearCart = async (req, res) => {
+  const cart = await cartModel.findOne({ user: req.params.uid });
+  if (!cart) {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
+  }
+  cart.products = [];
+  await cart.save();
+  return res.status(200).json({ message: "Carrinho limpo com sucesso." });
+};
+
 export default {
   createCart,
   getProductsFromCart,
   addProductToCart,
   getCarts,
+  clearCart,
+  setProductQuantity,
 };
