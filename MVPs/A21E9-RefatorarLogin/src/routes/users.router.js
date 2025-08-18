@@ -1,22 +1,19 @@
 import { Router } from "express";
 import usersController from "../controllers/users.controller.js";
+import { authMW } from "../utils.js";
 
 const usersRouter = Router();
 
-function auth(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).send("Unauthorized");
-  }
-  next();
-}
+usersRouter.get("/", authMW, usersController.getUsers);
+usersRouter.get("/logout", usersController.logout);
+usersRouter.post("/login", usersController.login);
+usersRouter.post("/register", usersController.createUser);
+usersRouter.post("/resetPassword", usersController.resetPassword);
 
-usersRouter.get("/", auth, usersController.getUsers);
-usersRouter.get("/:email", auth, usersController.getUserByEmail);
+usersRouter.get("/:email", authMW, usersController.getUserByEmail);
 
-usersRouter.post("/", auth, usersController.createUser);
+usersRouter.put("/:email", authMW, usersController.updateUser);
 
-usersRouter.put("/:email", auth, usersController.updateUser);
-
-usersRouter.delete("/:email", auth, usersController.deleteUser);
+usersRouter.delete("/:email", authMW, usersController.deleteUser);
 
 export default usersRouter;

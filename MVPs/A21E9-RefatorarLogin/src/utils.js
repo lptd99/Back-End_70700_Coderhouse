@@ -1,10 +1,19 @@
+import bcrypt from "bcrypt";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import bcrypt from bcrypt;
 
-export const createHash = password => bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+export const authMW = (req, res, next) => {
+  if (!req.session.user) {
+    return res.status(401).send("Unauthorized");
+  }
+  next();
+};
 
-export const isValidPassword = (user, password) => bcrypt.compareSync(password, user.password);
+export const createHash = (password) =>
+  bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+
+export const isValidPassword = (user, password) =>
+  bcrypt.compareSync(password, user.password);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

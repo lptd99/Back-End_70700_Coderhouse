@@ -1,5 +1,6 @@
 import { cartModel } from "../dao/models/cart.model.js";
 import { userModel } from "../dao/models/user.model.js";
+import { createHash, isValidPassword } from "../utils.js";
 
 const getUsers = async (req, res) => {
   let { limit, page, sort, query } = req.params;
@@ -37,7 +38,16 @@ const getUserByEmail = async (req, res) => {
 
 const createUser = async (req, res) => {
   const io = req.app.get("io"); // recupera o io
-  let user = req.body;
+  let user = {
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    email: req.body.email,
+    password: req.body.password.trim()
+      ? createHash(req.body.password)
+      : undefined,
+    birth: req.body.birth,
+    role: "user",
+  };
 
   if (
     !user.first_name ||
@@ -72,6 +82,65 @@ const createUser = async (req, res) => {
   } else {
     return res.status(400).json({ message: "Usuário inválido." });
   }
+};
+
+const login = async (req, res) => {
+  if (req.session.user) {
+    return res.send(`User already logged in: ${req.session.user.email}`);
+  }
+
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.send("Email and password are required");
+  }
+
+  const user = await userModel.findOne({ email });
+  if (!isValidPassword(user, password)) {
+    return res.send("Invalid email or password");
+  }
+  req.session.user = user;
+
+  if (user.role === "admin") {
+    req.session.admin = true;
+    res.send("Admin user authenticated");
+  } else {
+    res.send("User authenticated");
+  }
+  // TODO: Redirect to Products (current: can't POST to /products)
+  // Change above res.send to log
+  // res.redirect("../../products");
+};
+
+const logout = async (req, res) => {
+  if (!req.session.user) {
+    return res.send("No user logged in");
+  }
+
+  req.session.destroy((err) => {
+    if (err) {
+      return res.send("Error logging out");
+    }
+    res.send("Logged out successfully");
+  });
+};
+
+const resetPassword = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Email and new password are required." });
+  }
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  user.password = createHash(password);
+  await user.save();
+
+  res.status(200).json({ message: "Password reset successfully." });
 };
 
 const updateUser = async (req, res) => {
@@ -117,6 +186,9 @@ export default {
   getUsers,
   getUserByEmail,
   createUser,
+  login,
+  logout,
+  resetPassword,
   updateUser,
   deleteUser,
 };
