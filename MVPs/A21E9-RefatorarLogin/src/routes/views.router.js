@@ -7,9 +7,9 @@ router.get("/", (req, res) => {
   console.log("Home route called");
 });
 
-router.get("/realtimeproducts", (req, res) => {
-  res.render("realTimeProducts", { title: "Real Time Products" });
-  console.log("Real Time Products route called");
+router.get("/login", (req, res) => {
+  res.render("login", { title: "Login" });
+  console.log("Login route called");
 });
 
 export default router;

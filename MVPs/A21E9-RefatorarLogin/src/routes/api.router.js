@@ -18,7 +18,7 @@ router.use((req, res, next) => {
   console.log("ENDPOINT:", req.originalUrl);
   console.log("METHOD:", req.method);
   console.log("QUERY:", req.query);
-  req.body.senha ? null : console.log("BODY:", req.body);
+  req.body.password ? null : console.log("BODY:", req.body);
   console.log("DATE AND TIME:", new Date().toString());
   console.log("//=======// //=======//");
   next();

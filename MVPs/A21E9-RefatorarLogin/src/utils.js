@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 export const authMW = (req, res, next) => {
   if (!req.session.user) {
+    // TODO: separate admin / users
     return res.status(401).send("Unauthorized");
   }
   next();

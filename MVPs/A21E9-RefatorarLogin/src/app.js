@@ -6,11 +6,14 @@ import handlebars from "express-handlebars";
 import session from "express-session";
 import http from "http";
 import mongoose from "mongoose";
+import passport from "passport";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
+import initializePassport from "./config/passport.config.js";
 import apiRouter from "./routes/api.router.js";
-import viewRouter from "./routes/view.router.js";
+import viewRouter from "./routes/views.router.js";
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -74,6 +77,9 @@ app.use(
     saveUninitialized: true,
   })
 );
+initializePassport();
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use("/api", apiRouter);
 server.listen(8080, () => {

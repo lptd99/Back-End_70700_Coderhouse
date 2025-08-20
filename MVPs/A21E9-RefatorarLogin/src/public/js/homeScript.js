@@ -26,15 +26,7 @@ async function renderProducts() {
 
     productsList.innerHTML = "";
     products.forEach((product) => {
-      const productToRender = `Code: ${product.code}
-      Title: ${product.title}
-      Description: ${product.description}
-      Price: ${product.price}
-      Stock: ${product.stock}
-      Thumbnail: ${product.thumbnail}
-      Category: ${product.category}
-      Status: ${product.status}`;
-      renderProduct(productToRender);
+      renderProduct(product);
     });
     console.log("Produtos renderizados:", products);
   } catch (err) {
@@ -43,7 +35,36 @@ async function renderProducts() {
 }
 
 function renderProduct(product) {
-  const li = document.createElement("li");
-  li.textContent = product;
-  productsList.appendChild(li);
+  // Cria um card estilizado usando template literals para HTML
+  const card = document.createElement("div");
+  card.className = "product-card";
+  card.innerHTML = `
+    <div class="card">
+      <img src="${product.thumbnail}" alt="${
+    product.title
+  }" class="card-img-top" style="max-height: 180px; object-fit: cover;">
+      <div class="card-body">
+        <h5 class="card-title">${product.title}</h5>
+        <p class="card-text">${product.description}</p>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><strong>Código:</strong> ${
+            product.code
+          }</li>
+          <li class="list-group-item"><strong>Preço:</strong> R$ ${
+            product.price
+          }</li>
+          <li class="list-group-item"><strong>Estoque:</strong> ${
+            product.stock
+          }</li>
+          <li class="list-group-item"><strong>Categoria:</strong> ${
+            product.category
+          }</li>
+          <li class="list-group-item"><strong>Status:</strong> ${
+            product.status ? "Ativo" : "Inativo"
+          }</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  productsList.appendChild(card);
 }
