@@ -1,21 +1,36 @@
 import { Router } from "express";
 import passport from "passport";
 import usersController from "../controllers/users.controller.js";
-import { authMW } from "../utils.js";
+import { authMW, authorization, ensureNotLoggedIn } from "../utils.js";
 
 const usersRouter = Router();
 
-usersRouter.get("/", authMW, usersController.getUsers);
+usersRouter.get("/", authMW, authorization("admin"), usersController.getUsers);
 
 usersRouter.post(
   "/login",
+  ensureNotLoggedIn,
   passport.authenticate("login", { failureRedirect: "/faillogin" }),
   usersController.login
 );
+
 usersRouter.post("/faillogin", async (req, res) => {
   console.log("Failed to login:", req.body);
   res.status(400).send("Failed to login");
 });
+
+usersRouter.get(
+  "/github",
+  ensureNotLoggedIn,
+  // não peça user:email -> a strategy NÃO chamará /user/emails
+  passport.authenticate("github", { scope: ["read:user"] })
+);
+
+usersRouter.get(
+  "/github/callback",
+  passport.authenticate("github", { failureRedirect: "/login" }),
+  usersController.githubLoginCB
+);
 
 usersRouter.get("/logout", usersController.logout);
 
@@ -31,8 +46,11 @@ usersRouter.post("/failregister", async (req, res) => {
 
 usersRouter.post("/resetPassword", usersController.resetPassword);
 
-usersRouter.get("/:email", authMW, usersController.getUserByEmail);
+usersRouter.get("/current", authMW, authorization("user"), (req, res) => {
+  res.send(req.user || req.session.user);
+});
 
+usersRouter.get("/:email", authMW, usersController.getUserByEmail);
 usersRouter.put("/:email", authMW, usersController.updateUser);
 usersRouter.delete("/:email", authMW, usersController.deleteUser);
 

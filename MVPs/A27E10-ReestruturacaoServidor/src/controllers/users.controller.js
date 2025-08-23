@@ -3,13 +3,9 @@ import { userModel } from "../dao/models/user.model.js";
 import { createHash, isValidPassword } from "../utils.js";
 
 const getUsers = async (req, res) => {
-  let { limit, page, sort, query } = req.params;
-  let users = [];
-
-  users = await userModel.paginate(
-    { query: query },
-    { limit: limit || 10, page, sort }
-  );
+  let { limit = 10, page = 1, sort, query } = req.query;
+  const filter = query ? { $text: { $search: query } } : {};
+  const users = await userModel.paginate(filter, { limit, page, sort });
 
   if (users.docs.length > 0) {
     return res.status(200).json({ users: users.docs });
@@ -85,42 +81,43 @@ const createUser = async (req, res) => {
 };
 
 const login = async (req, res) => {
+  // Já tem alguém logado?
   if (req.session.user) {
-    return res.send(`User already logged in: ${req.session.user.email}`);
+    return res
+      .status(409)
+      .send(`User already logged in: ${req.session.user.email}`);
   }
 
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.send("Email and password are required");
-  }
+  if (!email || !password)
+    return res.status(400).send("Email and password are required");
 
   const user = await userModel.findOne({ email });
-  if (!isValidPassword(user, password)) {
-    return res.send("Invalid email or password");
+  if (!user || !isValidPassword(user, password)) {
+    return res.status(401).send("Invalid email or password");
   }
-  req.session.user = user;
 
-  if (user.role === "admin") {
-    req.session.admin = true;
-    res.send("Admin user authenticated");
-  } else {
-    res.send("User authenticated");
-  }
-  // TODO: Redirect to Products (current: can't POST to /products)
-  // Change above res.send to log
-  // res.redirect("../../products");
+  // Salva dados SEGUROS na sessão (sem senha!)
+  req.session.user = {
+    id: user._id.toString(),
+    email: user.email,
+    role: user.role || "user",
+    provider: "local",
+  };
+  if (user.role === "admin") req.session.admin = true;
+
+  return res.redirect("/"); // ou res.send({ message: "User authenticated" })
 };
 
 const logout = async (req, res) => {
   if (!req.session.user) {
-    return res.send("No user logged in");
+    // não está logado → redireciona pra /login
+    return res.redirect("/login");
   }
-
   req.session.destroy((err) => {
-    if (err) {
-      return res.send("Error logging out");
-    }
-    res.send("Logged out successfully");
+    if (err) return res.status(500).send("Error logging out");
+    res.clearCookie("connect.sid"); // nome padrão do cookie de sessão
+    return res.redirect("/login");
   });
 };
 
@@ -144,14 +141,15 @@ const resetPassword = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
+  const io = req.app.get("io"); // pega io, como nos outros
   let email = req.params.email;
   let user = req.body;
-  // const result = await productManager.updateProduct(id, product);
-  const result = await userModel.findOneAndUpdate({ email: email }, user, {
+
+  const result = await userModel.findOneAndUpdate({ email }, user, {
     new: true,
   });
   if (result) {
-    io.emit("usersUpdated"); // emite para todos os clientes
+    io.emit("usersUpdated");
     return res.status(200).json({ message: "Usuário atualizado com sucesso." });
   } else {
     return res
@@ -182,6 +180,21 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const githubLoginCB = async (req, res) => {
+  if (!req.user) return res.redirect("/login");
+  console.log(req.user);
+
+  req.session.user = {
+    id: req.user._id.toString(),
+    email: req.user.email,
+    role: req.user.role || "user",
+    provider: "github",
+  };
+  if (req.user.role === "admin") req.session.admin = true;
+
+  return res.redirect("/");
+};
+
 export default {
   getUsers,
   getUserByEmail,
@@ -191,4 +204,5 @@ export default {
   resetPassword,
   updateUser,
   deleteUser,
+  githubLoginCB,
 };

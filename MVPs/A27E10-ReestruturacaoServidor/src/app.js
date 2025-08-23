@@ -71,15 +71,27 @@ app.use(
         useUnifiedTopology: true,
       },
       collectionName: "sessions",
+      ttl: 60 * 60, // 1h
     }),
     secret: process.env.COOKIE_SECRET,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 60 * 60 * 1000, // 1h
+      sameSite: "lax",
+      // secure: true, // ative em produção HTTPS
+    },
   })
 );
+
 initializePassport();
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use((req, _res, next) => {
+  console.log("Cookies recebidos:", req.cookies); // deve incluir authToken
+  next();
+});
 
 app.use("/api", apiRouter);
 server.listen(8080, () => {
