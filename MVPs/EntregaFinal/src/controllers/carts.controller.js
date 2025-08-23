@@ -22,41 +22,76 @@ const getProductsFromCart = async (req, res, next) => {
 };
 
 const addProductToCart = async (req, res) => {
-  let userId = req.params.uid;
-  let productId = req.params.pid;
-  let quantity = parseInt(req.params.pquantity) || 1;
+  const userId = req.params.uid;
+  const productId = req.params.pid;
+  let quantity = parseInt(req.params.pquantity, 10) || 1;
 
-  if (isNaN(quantity) || quantity <= 0) {
+  if (!Number.isFinite(quantity) || quantity <= 0) {
     return res.status(400).json({ message: "Quantidade inválida." });
   }
 
-  let product = await productModel.findById(productId);
-  console.log(product);
+  // 1) Decrementa estoque de forma atômica, só se houver estoque suficiente
+  // (evita corrida: zwei usuários ao mesmo tempo – “dois usuários ao mesmo tempo”)
+  const updatedProduct = await productModel.findOneAndUpdate(
+    { _id: productId, stock: { $gte: quantity } },
+    { $inc: { stock: -quantity } },
+    { new: true } // já retorna o produto com stock atualizado
+  );
 
-  if (!product) {
-    return res
-      .status(404)
-      .json({ message: `Produto de id ${productCode} não encontrado.` });
+  if (!updatedProduct) {
+    // Não encontrou produto OU não tinha estoque suficiente
+    // Checa se o produto existe só pra melhorar a mensagem
+    const exists = await productModel.exists({ _id: productId });
+    return exists
+      ? res
+          .status(409)
+          .json({ message: "Estoque insuficiente para este produto." })
+      : res.status(404).json({ message: "Produto não encontrado." });
   }
 
-  let cart = await cartModel.findOne({ user: userId });
-  console.log(cart);
+  // 2) Atualiza o carrinho (adiciona ou incrementa)
+  try {
+    const cart = await cartModel.findOne({ user: userId });
+    if (!cart) {
+      // rollback do estoque antes de sair
+      await productModel.updateOne(
+        { _id: productId },
+        { $inc: { stock: quantity } }
+      );
+      return res.status(404).json({ message: "Carrinho não encontrado." });
+    }
 
-  if (cart) {
-    let productIndex = cart.products.findIndex(
-      (p) => p.product && p.product.toString() === product._id.toString()
+    const idx = cart.products.findIndex(
+      (p) => p.product && p.product.toString() === productId.toString()
     );
-    if (productIndex !== -1) {
-      cart.products[productIndex].quantity += quantity;
+
+    if (idx !== -1) {
+      cart.products[idx].quantity += quantity;
     } else {
       cart.products.push({ product: productId, quantity });
     }
+
     await cart.save();
-    product.stock -= quantity;
-    await product.save();
-    return res.status(200).json({ message: "Produto adicionado ao carrinho." });
-  } else {
-    return res.status(404).json({ message: "Carrinho não encontrado." });
+
+    // sucesso ✅
+    return res.status(200).json({
+      message: "Produto adicionado ao carrinho.",
+      productId,
+      added: quantity,
+      newStock: updatedProduct.stock,
+    });
+  } catch (err) {
+    // 3) Se falhar o update do carrinho, desfaz a reserva no estoque (rollback)
+    await productModel.updateOne(
+      { _id: productId },
+      { $inc: { stock: quantity } }
+    );
+    return res
+      .status(500)
+      .json({
+        message: "Erro ao adicionar ao carrinho.",
+        details: err.message,
+      });
   }
 };
 

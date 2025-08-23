@@ -7,8 +7,8 @@ cartsRouter.get("/", cartsController.getCarts);
 
 cartsRouter.get("/:uid", cartsController.getProductsFromCart);
 
-cartsRouter.put("/:uid/:pid/:pquantity", cartsController.addProductToCart);
-cartsRouter.put(
+cartsRouter.post("/:uid/:pid/:pquantity", cartsController.addProductToCart);
+cartsRouter.post(
   "/:uid/products/:pid/:pquantity",
   cartsController.setProductQuantity
 );

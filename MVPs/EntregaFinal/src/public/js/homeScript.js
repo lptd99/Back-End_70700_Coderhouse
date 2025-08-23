@@ -2,8 +2,89 @@ const socket = io();
 
 console.log("Conectado ao servidor de socket");
 
+let currentUser = null;
+
+async function fetchCurrentUser() {
+  try {
+    const res = await fetch("/api/users/current");
+    if (res.ok) {
+      currentUser = await res.json();
+      console.log("Usuário logado:", currentUser);
+    } else {
+      console.warn("Não logado");
+    }
+  } catch (e) {
+    console.error("Erro ao buscar current user:", e);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchCurrentUser().catch(() => null);
+});
+
 const loadProductsButton = document.getElementById("loadProductsButton");
 const productsList = document.getElementById("productsList");
+productsList.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".add-to-cart-btn");
+  if (!btn) return;
+
+  const card = btn.closest(".product-card");
+  const productId = btn.dataset.productId;
+  const qtyInput = card.querySelector(".product-qty");
+  let quantity = parseInt(qtyInput.value, 10);
+
+  // saneamento da quantidade
+  if (!Number.isFinite(quantity) || quantity < 1) quantity = 1;
+
+  // garante usuário carregado
+  if (!currentUser) {
+    await fetchCurrentUser().catch(() => null);
+  }
+  const userId = currentUser?.id || currentUser?._id;
+  if (!userId) {
+    showToast("warning", "Faça login para adicionar ao carrinho.");
+    window.location.href = "/login";
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = "Adicionando...";
+
+  try {
+    // tua rota: /api/carts/:uid/:pid/:quantity
+    const url = `/api/carts/${encodeURIComponent(userId)}/${encodeURIComponent(
+      productId
+    )}/${encodeURIComponent(quantity)}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      // não precisa body/json porque a rota usa params
+      // headers/credentials default já bastam para mesma origem
+    });
+
+    const text = await res.text(); // útil para depurar mensagens do back
+    if (!res.ok) throw new Error(text || "Falha ao adicionar ao carrinho");
+
+    btn.textContent = "Adicionado ✓";
+    const stockLi = card.querySelector(".list-group-item:nth-child(3)");
+    // OBS: na tua UL a ordem é: Código, Preço, Estoque, Categoria, Status
+    if (stockLi) {
+      const oldStock = parseInt(stockLi.textContent.replace(/\D/g, ""), 10);
+      if (!isNaN(oldStock)) {
+        const newStock = oldStock - quantity;
+        stockLi.innerHTML = `<strong>Estoque:</strong> ${newStock}`;
+      }
+    }
+  } catch (error) {
+    btn.textContent = originalText;
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }, 1200);
+  }
+});
 
 loadProductsButton.addEventListener("click", async () => {
   console.log("Carregando produtos...");
@@ -16,6 +97,7 @@ socket.on("productsUpdated", async () => {
 });
 
 async function renderProducts() {
+  await fetchCurrentUser();
   try {
     const response = await fetch("/api/products");
     console.log(response);
@@ -35,37 +117,57 @@ async function renderProducts() {
 }
 
 function renderProduct(product) {
-  // Cria um card estilizado usando template literals para HTML
   const card = document.createElement("div");
   card.className = "product-card";
+
+  const imgSrc =
+    product.thumbnail || "https://via.placeholder.com/300x180?text=Produto";
+  const statusTxt = product.status ? "Ativo" : "Inativo";
+
   card.innerHTML = `
-    <div class="card">
-      <img src="${product.thumbnail}" alt="${
+    <div class="card h-100">
+      <img src="${imgSrc}" alt="${
     product.title
   }" class="card-img-top" style="max-height: 180px; object-fit: cover;">
-      <div class="card-body">
+      <div class="card-body d-flex flex-column">
         <h5 class="card-title">${product.title}</h5>
-        <p class="card-text">${product.description}</p>
-        <ul class="list-group list-group-flush">
+        <p class="card-text">${product.description || ""}</p>
+        <ul class="list-group list-group-flush mb-3">
           <li class="list-group-item"><strong>Código:</strong> ${
-            product.code
+            product.code || "-"
           }</li>
           <li class="list-group-item"><strong>Preço:</strong> R$ ${
-            product.price
+            product.price?.toFixed ? product.price.toFixed(2) : product.price
           }</li>
           <li class="list-group-item"><strong>Estoque:</strong> ${
-            product.stock
+            product.stock ?? "-"
           }</li>
           <li class="list-group-item"><strong>Categoria:</strong> ${
-            product.category
+            product.category || "-"
           }</li>
-          <li class="list-group-item"><strong>Status:</strong> ${
-            product.status ? "Ativo" : "Inativo"
-          }</li>
+          <li class="list-group-item"><strong>Status:</strong> ${statusTxt}</li>
         </ul>
+
+        <div class="d-flex align-items-center gap-2 mt-auto">
+          <label for="qty-${
+            product._id
+          }" class="form-label m-0 small">Qtd</label>
+          <input type="number"
+                 id="qty-${product._id}"
+                 class="form-control form-control-sm product-qty"
+                 value="1" min="1" step="1"
+                 style="width: 90px;" inputmode="numeric" />
+
+          <button type="button"
+                  class="btn btn-sm btn-success add-to-cart-btn"
+                  data-product-id="${product._id}">
+            Adicionar ao carrinho
+          </button>
+        </div>
       </div>
     </div>
   `;
+
   productsList.appendChild(card);
 }
 

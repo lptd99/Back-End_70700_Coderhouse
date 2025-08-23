@@ -1,0 +1,41 @@
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Carrinho</h3>
+    <div class="d-flex gap-2">
+      <a href="/" class="btn btn-outline-secondary">← Voltar à Home</a>
+      <button id="clearCartBtn" class="btn btn-outline-danger">Limpar carrinho</button>
+      <button id="checkoutBtn" class="btn btn-success">Finalizar compra</button>
+    </div>
+  </div>
+
+  <div id="toastArea" class="position-fixed top-0 end-0 p-3" style="z-index: 1055"></div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th class="text-end">Preço (R$)</th>
+              <th class="text-center">Estoque</th>
+              <th class="text-center">Qtd</th>
+              <th class="text-end">Subtotal (R$)</th>
+              <th class="text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="cartList"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-end">
+      <h5 class="m-0">Total: R$ <span id="cartTotal">0,00</span></h5>
+    </div>
+  </div>
+</div>
+
+<!-- Injeta user na página (ajuste conforme salvar na sessão) -->
+<script>window.userId = "{{user.id}}";</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/cartScript.js"></script>
