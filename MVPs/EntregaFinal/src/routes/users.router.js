@@ -14,7 +14,7 @@ usersRouter.post(
   usersController.login
 );
 
-usersRouter.post("/faillogin", async (req, res) => {
+usersRouter.get("/faillogin", async (req, res) => {
   console.log("Failed to login:", req.body);
   res.status(400).send("Failed to login");
 });
@@ -34,12 +34,8 @@ usersRouter.get(
 
 usersRouter.get("/logout", usersController.logout);
 
-usersRouter.post(
-  "/register",
-  passport.authenticate("register", { failureRedirect: "/failregister" }),
-  usersController.createUser
-);
-usersRouter.post("/failregister", async (req, res) => {
+usersRouter.post("/register", ensureNotLoggedIn, usersController.createUser);
+usersRouter.get("/failregister", async (req, res) => {
   console.log("Failed to register user:", req.body);
   res.status(400).send("Failed to register");
 });

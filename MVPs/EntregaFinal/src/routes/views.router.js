@@ -8,8 +8,13 @@ router.get("/", (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-  res.render("login", { title: "Login" });
+  res.render("login", { query: req.query, title: "Login" });
   console.log("Login route called");
+});
+
+router.get("/register", (req, res) => {
+  res.render("register", { title: "Register" });
+  console.log("Register route called");
 });
 
 export default router;

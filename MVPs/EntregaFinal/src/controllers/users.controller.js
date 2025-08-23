@@ -44,6 +44,7 @@ const createUser = async (req, res) => {
     birth: req.body.birth,
     role: "user",
   };
+  console.log(user);
 
   if (
     !user.first_name ||
@@ -111,13 +112,14 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   if (!req.session.user) {
-    // não está logado → redireciona pra /login
-    return res.redirect("/login");
+    // não está logado
+    return res.redirect("/login?msg=Você não estava logado");
   }
+
   req.session.destroy((err) => {
     if (err) return res.status(500).send("Error logging out");
-    res.clearCookie("connect.sid"); // nome padrão do cookie de sessão
-    return res.redirect("/login");
+    res.clearCookie("connect.sid");
+    return res.redirect("/login?msg=Logout realizado com sucesso");
   });
 };
 

@@ -1,5 +1,8 @@
 <!-- Div que envolve todo o conteúdo do chat -->
 <div class="container">
+  {{#if query.msg}}
+  <div class="alert alert-info">{{query.msg}}</div>
+  {{/if}}
   <!-- Título do chat -->
   <h2></h2>
 

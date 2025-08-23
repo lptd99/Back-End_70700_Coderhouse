@@ -10,10 +10,6 @@ const router = Router();
 
 // request logging middleware
 router.use((req, res, next) => {
-  if (req.body.password) {
-    console.log("PASSWORD:", req.body.password);
-  }
-
   console.log("REQUEST RECEIVED");
   console.log("ENDPOINT:", req.originalUrl);
   console.log("METHOD:", req.method);
