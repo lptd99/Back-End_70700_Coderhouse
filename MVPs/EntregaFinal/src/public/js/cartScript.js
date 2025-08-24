@@ -46,24 +46,31 @@ async function fetchCart() {
   // Sua função getProductsFromCart usa req.params.uid.
   // Adotei caminho: GET /api/carts/:uid/products  → { products: [{ product, quantity }] }
   // Se o seu router usar outro path, ajuste aqui.
-  const res = await fetch(`/api/carts/${encodeURIComponent(uid)}/products`, {
+  const res = await fetch(`/api/carts/${encodeURIComponent(uid)}`, {
     method: "GET",
   });
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
 
   // Normaliza itens para render
-  items = (data.products || []).map((row) => {
-    const p = row.product || row; // caso já venha populado
+  items = (data.products || []).map(async (cartProduct) => {
+    const response = await fetch(`/api/products/${cartProduct.product}`);
+    const responseJson = await response.json();
+    const product = await responseJson.product;
+    console.log(product);
+    console.log(product.title);
+
     return {
-      _id: p._id || row.product?._id,
-      title: p.title,
-      price: p.price,
-      stock: p.stock, // importante pro +/-
-      quantity: row.quantity, // qty no carrinho
-      thumbnail: p.thumbnail,
+      _id: product._id || cartProduct.product?._id,
+      title: product.title,
+      price: product.price,
+      stock: product.stock, // importante pro +/-
+      quantity: cartProduct.quantity, // qty no carrinho
+      thumbnail: product.thumbnail,
     };
   });
+  items = await Promise.all(items);
+  console.log(items);
 }
 
 // --- Render ---
@@ -82,9 +89,7 @@ function render() {
     tr.innerHTML = `
       <td>
         <div class="d-flex align-items-center gap-2">
-          <img src="${
-            it.thumbnail || "https://via.placeholder.com/60x40?text=IMG"
-          }" alt="${
+          <img src="${it.thumbnail || "img/garrafa2l.webp"}" alt="${
       it.title
     }" style="width:60px;height:40px;object-fit:cover;border-radius:6px">
           <div class="fw-semibold">${it.title}</div>
@@ -101,7 +106,7 @@ function render() {
           }>−</button>
           <span class="px-2 qty-label">${it.quantity}</span>
           <button class="btn btn-outline-secondary btn-plus" ${
-            it.quantity >= it.stock ? "disabled" : ""
+            it.stock >= 1 ? "" : "disabled"
           }>+</button>
         </div>
       </td>
@@ -117,23 +122,25 @@ function render() {
 }
 
 // --- Helpers de update remoto ---
-async function setQuantityRemote(pid, newQty) {
+async function removeQuantityRemote(pid, quantity) {
   const uid = currentUser?.id || currentUser?._id;
-  // você tem setProductQuantity(req.params.uid, req.params.pid, req.params.pquantity)
-  // Vou usar PUT /api/carts/quantity/:uid/:pid/:pquantity
-  const url = `/api/carts/quantity/${encodeURIComponent(
-    uid
-  )}/${encodeURIComponent(pid)}/${encodeURIComponent(newQty)}`;
-  const res = await fetch(url, { method: "PUT" });
+  console.log(
+    `Removendo ${quantity} do produto ${pid} no carrinho do usuário ${uid}`
+  );
+
+  const url = `/api/carts/${encodeURIComponent(uid)}/${encodeURIComponent(
+    pid
+  )}/remove/${encodeURIComponent(quantity)}`;
+  const res = await fetch(url, { method: "POST" });
   if (!res.ok) throw new Error(await res.text());
 }
 
-async function addOneRemote(pid) {
+async function addQuantityRemote(pid, qty = 1) {
   const uid = currentUser?.id || currentUser?._id;
   // seu addProductToCart é POST /api/carts/:uid/:pid/:pquantity
   const url = `/api/carts/${encodeURIComponent(uid)}/${encodeURIComponent(
     pid
-  )}/1`;
+  )}/${encodeURIComponent(qty)}`;
   const res = await fetch(url, { method: "POST" });
   if (!res.ok) throw new Error(await res.text());
 }
@@ -142,9 +149,9 @@ async function removeItemRemote(pid) {
   const uid = currentUser?.id || currentUser?._id;
   // suposição de rota (ajuste se necessário):
   // DELETE /api/carts/:uid/remove/:pid
-  const url = `/api/carts/${encodeURIComponent(
-    uid
-  )}/remove/${encodeURIComponent(pid)}`;
+  const url = `/api/carts/${encodeURIComponent(uid)}/${encodeURIComponent(
+    pid
+  )}`;
   const res = await fetch(url, { method: "DELETE" });
   if (!res.ok) throw new Error(await res.text());
 }
@@ -211,9 +218,9 @@ document.addEventListener("click", async (e) => {
     if (item.quantity <= 1) return;
     const newQty = item.quantity - 1;
     try {
-      await setQuantityRemote(pid, newQty);
+      await removeQuantityRemote(pid, 1); // reserva -1 no estoque
       item.quantity = newQty;
-      // se seu setQuantity não mexe no estoque, mantemos o stock igual
+      item.stock += 1; // espelha a devolução de estoque
       render();
     } catch (err) {
       showToast("danger", err.message || "Falha ao atualizar quantidade.");
@@ -223,13 +230,13 @@ document.addEventListener("click", async (e) => {
 
   // Aumentar (respeitando stock)
   if (plusBtn) {
-    if (item.quantity >= item.stock) {
+    if (!item.stock >= 1) {
       showToast("warning", "Quantidade máxima pelo estoque.");
       return;
     }
     try {
       // Podemos usar addOne (reserva +1 e já decrementa stock no banco, conforme sua regra)
-      await addOneRemote(pid);
+      await addQuantityRemote(pid, 1);
       item.quantity += 1;
       item.stock -= 1; // refletir a reserva no front
       render();

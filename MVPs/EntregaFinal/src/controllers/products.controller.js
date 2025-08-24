@@ -17,9 +17,11 @@ const getProducts = async (req, res) => {
 };
 
 const getProductById = async (req, res) => {
-  let code = req.params.code;
+  let id = req.params.id;
+  console.log(`Buscando produto com código: ${id}`);
+
   try {
-    let product = await productModel.findOne({ code: code });
+    let product = await productModel.findById(id);
     console.log(product);
 
     if (product) {

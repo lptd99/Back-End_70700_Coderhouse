@@ -21,17 +21,70 @@ const getProductsFromCart = async (req, res, next) => {
   return res.status(200).json({ products: result.products });
 };
 
-const addProductToCart = async (req, res) => {
+const removeProductQuantityFromCart = async (req, res) => {
   const userId = req.params.uid;
   const productId = req.params.pid;
-  let quantity = parseInt(req.params.pquantity, 10) || 1;
+  let quantity = parseInt(req.params.pquantity, 10);
 
   if (!Number.isFinite(quantity) || quantity <= 0) {
     return res.status(400).json({ message: "Quantidade inválida." });
   }
 
+  const cart = await cartModel.findOne({ user: userId });
+
+  if (!cart) {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
+  }
+
+  const product = await productModel.findById(productId);
+
+  if (!product) {
+    return res.status(404).json({ message: "Produto não encontrado." });
+  }
+
+  const idx = cart.products.findIndex(
+    (p) => p.product && p.product.toString() === productId.toString()
+  );
+
+  if (idx === -1) {
+    return res
+      .status(404)
+      .json({ message: "Produto não encontrado no carrinho." });
+  }
+
+  cart.products[idx].quantity -= quantity;
+  await productModel.updateOne(
+    { _id: productId },
+    { $inc: { stock: quantity } }
+  );
+
+  let removed = false;
+  if (cart.products[idx].quantity <= 0) {
+    cart.products.splice(idx, 1);
+    removed = true;
+  }
+
+  await cart.save();
+
+  removed
+    ? res
+        .status(200)
+        .json({ message: "Produto removido do carrinho.", productId })
+    : res
+        .status(200)
+        .json({ message: "Quantidade do produto atualizada.", productId });
+};
+
+const addProductToCart = async (req, res) => {
+  const userId = req.params.uid;
+  const productId = req.params.pid;
+  let quantity = parseInt(req.params.pquantity, 10);
+
+  if (!Number.isFinite(quantity)) {
+    return res.status(400).json({ message: "Quantidade inválida." });
+  }
+
   // 1) Decrementa estoque de forma atômica, só se houver estoque suficiente
-  // (evita corrida: zwei usuários ao mesmo tempo – “dois usuários ao mesmo tempo”)
   const updatedProduct = await productModel.findOneAndUpdate(
     { _id: productId, stock: { $gte: quantity } },
     { $inc: { stock: -quantity } },
@@ -39,7 +92,6 @@ const addProductToCart = async (req, res) => {
   );
 
   if (!updatedProduct) {
-    // Não encontrou produto OU não tinha estoque suficiente
     // Checa se o produto existe só pra melhorar a mensagem
     const exists = await productModel.exists({ _id: productId });
     return exists
@@ -86,13 +138,41 @@ const addProductToCart = async (req, res) => {
       { _id: productId },
       { $inc: { stock: quantity } }
     );
-    return res
-      .status(500)
-      .json({
-        message: "Erro ao adicionar ao carrinho.",
-        details: err.message,
-      });
+    return res.status(500).json({
+      message: "Erro ao adicionar ao carrinho.",
+      details: err.message,
+    });
   }
+};
+
+const removeProductFromCart = async (req, res) => {
+  const userId = req.params.uid;
+  const productId = req.params.pid;
+
+  const cart = await cartModel.findOne({ user: userId });
+  if (!cart) {
+    return res.status(404).json({ message: "Carrinho não encontrado." });
+  }
+
+  const idx = cart.products.findIndex(
+    (p) => p.product && p.product.toString() === productId.toString()
+  );
+
+  if (idx === -1) {
+    return res
+      .status(404)
+      .json({ message: "Produto não encontrado no carrinho." });
+  }
+
+  await productModel.updateOne(
+    { _id: productId },
+    { $inc: { stock: cart.products[idx].quantity } }
+  );
+
+  cart.products.splice(idx, 1);
+  await cart.save();
+
+  return res.status(200).json({ message: "Produto removido do carrinho." });
 };
 
 const setProductQuantity = async (req, res) => {
@@ -156,6 +236,8 @@ const clearCart = async (req, res) => {
 export default {
   createCart,
   getProductsFromCart,
+  removeProductQuantityFromCart,
+  removeProductFromCart,
   addProductToCart,
   getCarts,
   clearCart,

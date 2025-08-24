@@ -12,6 +12,11 @@ router.get("/login", (req, res) => {
   console.log("Login route called");
 });
 
+router.get("/cart", (req, res) => {
+  res.render("cart", { query: req.query, title: "Cart" });
+  console.log("Cart route called");
+});
+
 router.get("/register", (req, res) => {
   res.render("register", { title: "Register" });
   console.log("Register route called");

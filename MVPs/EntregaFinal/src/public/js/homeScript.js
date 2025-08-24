@@ -42,7 +42,6 @@ productsList.addEventListener("click", async (e) => {
   }
   const userId = currentUser?.id || currentUser?._id;
   if (!userId) {
-    showToast("warning", "Faça login para adicionar ao carrinho.");
     window.location.href = "/login";
     return;
   }
@@ -100,11 +99,8 @@ async function renderProducts() {
   await fetchCurrentUser();
   try {
     const response = await fetch("/api/products");
-    console.log(response);
 
     const { products } = await response.json();
-    console.log("Produtos recebidos:", products);
-    console.log("Produto 1:", products[0]);
 
     productsList.innerHTML = "";
     products.forEach((product) => {
