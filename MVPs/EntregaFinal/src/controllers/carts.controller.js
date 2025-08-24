@@ -13,7 +13,7 @@ const createCart = async (req, res) => {
   }
 };
 
-const getProductsFromCart = async (req, res, next) => {
+const getProductsFromCart = async (req, res) => {
   const result = await cartModel.findOne({ user: req.params.uid });
   if (!result) {
     return res.status(404).json({ message: "Carrinho não encontrado." });
@@ -227,6 +227,12 @@ const clearCart = async (req, res) => {
   const cart = await cartModel.findOne({ user: req.params.uid });
   if (!cart) {
     return res.status(404).json({ message: "Carrinho não encontrado." });
+  }
+  for (const item of cart.products) {
+    await productModel.updateOne(
+      { _id: item.product },
+      { $inc: { stock: item.quantity } }
+    );
   }
   cart.products = [];
   await cart.save();

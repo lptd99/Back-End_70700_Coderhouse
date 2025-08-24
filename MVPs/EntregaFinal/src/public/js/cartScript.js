@@ -54,11 +54,16 @@ async function fetchCart() {
 
   // Normaliza itens para render
   items = (data.products || []).map(async (cartProduct) => {
+    console.log(cartProduct);
+
     const response = await fetch(`/api/products/${cartProduct.product}`);
+    console.log("60 response", response);
+
     const responseJson = await response.json();
+    console.log(responseJson);
+
     const product = await responseJson.product;
     console.log(product);
-    console.log(product.title);
 
     return {
       _id: product._id || cartProduct.product?._id,
@@ -160,7 +165,7 @@ async function clearCartRemote() {
   const uid = currentUser?.id || currentUser?._id;
   // você disse: api/carts/delete/userId
   // vou usar DELETE; se seu router for POST, troque o method.
-  const url = `/api/carts/delete/${encodeURIComponent(uid)}`;
+  const url = `/api/carts/${encodeURIComponent(uid)}`;
   const res = await fetch(url, { method: "DELETE" });
   if (!res.ok) throw new Error(await res.text());
 }
