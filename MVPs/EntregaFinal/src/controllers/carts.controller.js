@@ -84,24 +84,22 @@ const addProductToCart = async (req, res) => {
     return res.status(400).json({ message: "Quantidade inválida." });
   }
 
-  // 1) Decrementa estoque de forma atômica, só se houver estoque suficiente
-  const updatedProduct = await productModel.findOneAndUpdate(
-    { _id: productId, stock: { $gte: quantity } },
-    { $inc: { stock: -quantity } },
-    { new: true } // já retorna o produto com stock atualizado
-  );
-
-  if (!updatedProduct) {
-    // Checa se o produto existe só pra melhorar a mensagem
-    const exists = await productModel.exists({ _id: productId });
-    return exists
-      ? res
-          .status(409)
-          .json({ message: "Estoque insuficiente para este produto." })
-      : res.status(404).json({ message: "Produto não encontrado." });
+  const product = await productModel.findById(productId);
+  if (!product) {
+    return res.status(404).json({ message: "Produto não encontrado." });
   }
 
-  // 2) Atualiza o carrinho (adiciona ou incrementa)
+  if (quantity > product.stock) {
+    res.setHeader("Content-Type", "application/json");
+    return res.status(409).json({ message: "Estoque insuficiente." });
+  }
+
+  const updatedProduct = await productModel.findByIdAndUpdate(
+    productId,
+    { $inc: { stock: -quantity } },
+    { new: true }
+  );
+
   try {
     const cart = await cartModel.findOne({ user: userId });
     if (!cart) {

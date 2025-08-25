@@ -30,11 +30,17 @@ productsList.addEventListener("click", async (e) => {
 
   const card = btn.closest(".product-card");
   const productId = btn.dataset.productId;
+  const stock = btn.dataset.productStock;
   const qtyInput = card.querySelector(".product-qty");
   let quantity = parseInt(qtyInput.value, 10);
 
   // saneamento da quantidade
   if (!Number.isFinite(quantity) || quantity < 1) quantity = 1;
+
+  if (quantity > stock) {
+    alert("Quantidade acima do estoque disponível.");
+    return;
+  }
 
   // garante usuário carregado
   if (!currentUser) {
@@ -66,6 +72,7 @@ productsList.addEventListener("click", async (e) => {
     if (!res.ok) throw new Error(text || "Falha ao adicionar ao carrinho");
 
     btn.textContent = "Adicionado ✓";
+    btn.dataset.productStock = stock - quantity;
     const stockLi = card.querySelector(".list-group-item:nth-child(3)");
     // OBS: na tua UL a ordem é: Código, Preço, Estoque, Categoria, Status
     if (stockLi) {
@@ -156,8 +163,8 @@ function renderProduct(product) {
 
           <button type="button"
                   class="btn btn-sm btn-success add-to-cart-btn"
-                  data-product-id="${product._id}">
-            Adicionar ao carrinho
+                  data-product-id="${product._id}"
+                  data-product-stock="${product.stock}">Adicionar ao carrinho
           </button>
         </div>
       </div>
@@ -194,9 +201,8 @@ async function renderUsers() {
         });
         console.log("Usuários renderizados:", users);
         break;
-      case 401:
-        console.error("Sem autorização para buscar usuários");
-        window.location.href = "/login";
+      case 403:
+        console.error("Sem permissão para buscar usuários");
         break;
       case 404:
         console.error("Usuários não encontrados");

@@ -10,7 +10,9 @@ usersRouter.get("/", authMW, authorization("admin"), usersController.getUsers);
 usersRouter.post(
   "/login",
   ensureNotLoggedIn,
-  passport.authenticate("login", { failureRedirect: "/faillogin" }),
+  passport.authenticate("login", {
+    failureRedirect: "/login?msg=Falha no Login, tente novamente",
+  }),
   usersController.login
 );
 
