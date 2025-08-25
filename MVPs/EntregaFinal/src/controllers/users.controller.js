@@ -145,19 +145,30 @@ const resetPassword = async (req, res) => {
 const updateUser = async (req, res) => {
   const io = req.app.get("io"); // pega io, como nos outros
   let email = req.params.email;
-  let user = req.body;
+  let updates = { ...req.body };
+  if (updates.email && email !== updates.email) {
+    return res.status(400).json({ message: "Email não pode ser alterado." });
+  }
+  updates.password ? (updates.password = createHash(updates.password)) : null;
+  updates.role ? (updates.role = "user") : null;
 
-  const result = await userModel.findOneAndUpdate({ email }, user, {
-    new: true,
-  });
-  if (result) {
-    io.emit("usersUpdated");
-    return res.status(200).json({ message: "Usuário atualizado com sucesso." });
-  } else {
+  const result = await userModel.findOneAndUpdate(
+    { email },
+    { $set: updates },
+    { new: true }
+  );
+  console.log(result);
+
+  if (!result) {
     return res
       .status(404)
       .json({ message: `Usuário com email ${email} não encontrado.` });
   }
+
+  io.emit("usersUpdated");
+  return res
+    .status(200)
+    .json({ message: "Usuário atualizado com sucesso.", user: result });
 };
 
 const deleteUser = async (req, res) => {
@@ -172,7 +183,7 @@ const deleteUser = async (req, res) => {
       io.emit("cartsUpdated"); // emite para todos os clientes
       console.log("Carrinho deletado com sucesso.");
     } else {
-      console.log("Erro ao deletar carrinho para usuário de email.");
+      console.log("Erro ao deletar carrinho para usuário deletado.");
     }
     return res.status(200).json({ message: "Usuário deletado com sucesso." });
   } else {

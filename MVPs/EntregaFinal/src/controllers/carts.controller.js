@@ -15,6 +15,19 @@ const createCart = async (req, res) => {
 
 const getProductsFromCart = async (req, res) => {
   const result = await cartModel.findOne({ user: req.params.uid });
+  const products = result ? result.products : [];
+  products.forEach(async (element) => {
+    const p = await productModel.findById(element.product);
+    if (!p) {
+      console.log(
+        `Produto com ID ${element.product} encontrado no Carrinho mas não no Banco: provavelmente deletado pelo vendedor. Removendo também do carrinho...`
+      );
+      await cartModel.updateOne(
+        { user: req.params.uid },
+        { $pull: { products: { product: element.product } } }
+      );
+    }
+  });
   if (!result) {
     return res.status(404).json({ message: "Carrinho não encontrado." });
   }

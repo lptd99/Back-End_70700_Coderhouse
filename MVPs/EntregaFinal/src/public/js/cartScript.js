@@ -43,9 +43,6 @@ async function fetchCurrentUser() {
 async function fetchCart() {
   const uid = currentUser?.id || currentUser?._id;
   if (!uid) throw new Error("Usuário não identificado");
-  // Sua função getProductsFromCart usa req.params.uid.
-  // Adotei caminho: GET /api/carts/:uid/products  → { products: [{ product, quantity }] }
-  // Se o seu router usar outro path, ajuste aqui.
   const res = await fetch(`/api/carts/${encodeURIComponent(uid)}`, {
     method: "GET",
   });

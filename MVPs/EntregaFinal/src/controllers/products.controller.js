@@ -1,4 +1,5 @@
 import { productModel } from "../dao/models/product.model.js";
+import { isValidObjectId } from "../utils.js";
 
 const getProducts = async (req, res) => {
   let { limit, page, sort, query } = req.params;
@@ -19,6 +20,10 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   let id = req.params.id;
   console.log(`Buscando produto com código: ${id}`);
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: "ID inválido." });
+  }
 
   try {
     let product = await productModel.findById(id);
@@ -62,7 +67,6 @@ const addProduct = async (req, res) => {
     }
   }
 
-  // const result = productManager.addProduct(product); ============== // Old, FileSystem usage
   const result = await productModel.create(product);
   if (result) {
     io.emit("productsUpdated"); // emite para todos os clientes
@@ -73,25 +77,40 @@ const addProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
-  let id = parseInt(req.params.id);
-  let product = req.body;
-  // const result = await productManager.updateProduct(id, product);
-  const result = await productModel.findByIdAndUpdate(id, product, {
-    new: true,
-  });
-  if (result) {
-    io.emit("productsUpdated"); // emite para todos os clientes
-    return res.status(200).json({ message: "Produto atualizado com sucesso." });
-  } else {
+  const io = req.app.get("io");
+  const id = req.params.id;
+  const updates = { ...req.body };
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: "ID inválido." });
+  }
+
+  updates.id = id;
+
+  const result = await productModel.findByIdAndUpdate(
+    id,
+    { $set: updates },
+    { new: true }
+  );
+
+  if (!result) {
     return res
       .status(404)
       .json({ message: `Produto de id ${id} não encontrado.` });
   }
+
+  io.emit("productsUpdated");
+  return res
+    .status(200)
+    .json({ message: "Produto atualizado com sucesso.", product: result });
 };
 
 const deleteProduct = async (req, res) => {
-  let id = parseInt(req.params.id);
-  // const result = await productManager.deleteProduct(id); // ============== // Old, FileSystem usage
+  const io = req.app.get("io"); // recupera o io
+  let id = req.params.id;
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: "ID inválido." });
+  }
   const result = await productModel.findByIdAndDelete(id);
   if (result) {
     io.emit("productsUpdated"); // emite para todos os clientes

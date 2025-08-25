@@ -110,6 +110,11 @@ async function renderProducts() {
     const { products } = await response.json();
 
     productsList.innerHTML = "";
+    if (!products || products.length === 0) {
+      productsList.innerHTML =
+        "<div class='alert alert-info'>Nenhum produto disponível.</div>";
+      return;
+    }
     products.forEach((product) => {
       renderProduct(product);
     });

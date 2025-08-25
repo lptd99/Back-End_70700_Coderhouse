@@ -51,6 +51,10 @@ export const authMW = (req, res, next) => {
   next();
 };
 
+export const isValidObjectId = (id) => {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+};
+
 export const createHash = (password) =>
   bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 
